@@ -47,7 +47,9 @@ class MunkresElement:
 class PandasMunkres:
     def __init__(self, matrix: pd.DataFrame):
         self.assignment_matrix = matrix
-        self.assignment_matrix: pd.DataFrame = self.assignment_matrix.apply(self._convert_to_munkres_objects)
+        self.assignment_matrix: pd.DataFrame = self.assignment_matrix.apply(
+            self._convert_to_munkres_objects
+        )
         self.lines_covered = 0
 
     def calculate(self) -> List[Tuple[int, int]]:
@@ -63,26 +65,35 @@ class PandasMunkres:
 
     def _step_1(self):
         """
-        For each row in the matrix, find the smallest value. Then subtract that value from every value in the row
+        For each row in the matrix, find the smallest value. Then subtract that
+        value from every value in the row
         :return:
         """
-        self.assignment_matrix = self.assignment_matrix.apply(func=PandasMunkres._subtract_min_from_every_element, axis=1)
+        self.assignment_matrix = self.assignment_matrix.apply(
+            func=PandasMunkres._subtract_min_from_every_element, axis=1
+        )
 
     def _step_2(self):
         """
         Repeat step 1 but with columns instead of rows
         :return:
         """
-        self.assignment_matrix = self.assignment_matrix.apply(func=PandasMunkres._subtract_min_from_every_element, axis=0)
+        self.assignment_matrix = self.assignment_matrix.apply(
+            func=PandasMunkres._subtract_min_from_every_element, axis=0
+        )
 
     def _step_3(self):
         """
-        Draw lines through the row and columns that have the 0 entries such that the fewest lines possible are drawn.
-        Calculate the number of zeroes in each row or column. Cover the series. Repeat, ignoring the covered series,
+        Draw lines through the row and columns that have the 0 entries such
+        that the fewest lines possible are drawn.
+        Calculate the number of zeroes in each row or column. Cover the series.
+        Repeat, ignoring the covered series,
         until there are no more uncovered zeroes.
         :return:
         """
-        while self.assignment_matrix.applymap(lambda x: x.value == 0 and not x.covered).any(axis=None):
+        while self.assignment_matrix.applymap(
+            lambda x: x.value == 0 and not x.covered
+        ).any(axis=None):
             self._cover_series_with_most_zeroes()
         if self.lines_covered == len(self.assignment_matrix):
             print("Done")
@@ -90,12 +101,18 @@ class PandasMunkres:
 
     @staticmethod
     def _get_count_of_zeroes_from_series(series: pd.Series) -> int:
-        return series.apply(lambda x: x.value if not x.covered else None).value_counts().get(0)
+        return (
+            series.apply(lambda x: x.value if not x.covered else None)
+            .value_counts()
+            .get(0)
+        )
 
     @staticmethod
     def _subtract_min_from_every_element(series: pd.Series):
         min_value = series.copy().apply(func=lambda x: x.value).min()
-        return series.apply(func=PandasMunkres._subtract_value_from_object_value, args=(min_value,))
+        return series.apply(
+            func=PandasMunkres._subtract_value_from_object_value, args=(min_value,)
+        )
 
     @staticmethod
     def _subtract_value_from_object_value(x: MunkresElement, value):
@@ -103,16 +120,26 @@ class PandasMunkres:
         return x
 
     def _cover_series_with_most_zeroes(self):
-        rows_with_zeroes = self.assignment_matrix.apply(func=PandasMunkres._get_count_of_zeroes_from_series, axis=1)
-        columns_with_zeroes = self.assignment_matrix.apply(func=PandasMunkres._get_count_of_zeroes_from_series, axis=0)
-        most_zeroes_index = rows_with_zeroes.idxmax() \
-            if rows_with_zeroes.max() > columns_with_zeroes.max() \
+        rows_with_zeroes = self.assignment_matrix.apply(
+            func=PandasMunkres._get_count_of_zeroes_from_series, axis=1
+        )
+        columns_with_zeroes = self.assignment_matrix.apply(
+            func=PandasMunkres._get_count_of_zeroes_from_series, axis=0
+        )
+        most_zeroes_index = (
+            rows_with_zeroes.idxmax()
+            if rows_with_zeroes.max() > columns_with_zeroes.max()
             else columns_with_zeroes.idxmax()
+        )
         self.assignment_matrix[most_zeroes_index].munkres.cover()
         self.lines_covered += 1
 
     def _count_covered_series(self):
-        return self.assignment_matrix.apply(lambda x: x.munkres.covered, axis=0).all(axis=None) + self.assignment_matrix.apply(lambda x: x.munkres.covered, axis=1).all(axis=None)
+        return self.assignment_matrix.apply(lambda x: x.munkres.covered, axis=0).all(
+            axis=None
+        ) + self.assignment_matrix.apply(lambda x: x.munkres.covered, axis=1).all(
+            axis=None
+        )
 
     def _find_a_series_with_one_zero(self):
         for row_name, row in self.assignment_matrix.iterrows():
@@ -123,6 +150,5 @@ class PandasMunkres:
                 return column_name
 
     def _clear_covers(self):
-        self.assignment_matrix.apply(lambda x: x.munkres.uncover(), axis=1)
-        self.assignment_matrix.apply(lambda x: x.munkres.uncover(), axis=0)
-
+        for i in range(0, 2):
+            self.assignment_matrix.apply(lambda x: x.munkres.uncover(), axis=i)
