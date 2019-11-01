@@ -1,4 +1,4 @@
-from pandas_munkres.PandasMunkres import PandasMunkres
+from pandas_munkres.PandasMunkres import PandasMunkres, MunkresElement
 import pytest
 import pandas as pd
 
@@ -18,3 +18,18 @@ def assignment_matrix():
         "jonathan": [35, 20, 25, 30],
     }
     yield pd.DataFrame(data=costs)
+
+
+class TestPandasMunkresAccessor:
+    def test_cover(self):
+        series = pd.Series([MunkresElement(1), MunkresElement(2), MunkresElement(3)])
+        series.munkres.cover()
+        assert series.apply(lambda x: x.covered).all()
+        assert series.munkres.covered
+
+    def test_uncover(self):
+        series = pd.Series([MunkresElement(1), MunkresElement(2), MunkresElement(3)])
+        series.munkres.cover()
+        series.munkres.uncover()
+        assert not series.apply(lambda x: x.covered).any()
+        assert not series.munkres.covered

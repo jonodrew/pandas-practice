@@ -13,7 +13,7 @@ class PandasMunkresAccessor:
         Marks all elements in this series as 'covered' and also itself
         :return:
         """
-        self._obj.apply(lambda x: x.cover())
+        self._obj.apply(MunkresElement.cover)
         self.covered = True
 
     def uncover(self):
@@ -21,7 +21,7 @@ class PandasMunkresAccessor:
         Marks all elements in this series as uncovered and also itself
         :return:
         """
-        self._obj.apply(lambda x: x.uncover())
+        self._obj.apply(MunkresElement.uncover)
         self.covered = False
 
 
